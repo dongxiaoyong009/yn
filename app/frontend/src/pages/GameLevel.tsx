@@ -8,65 +8,27 @@ import GameCanvas from '@/components/GameCanvas';
 import audioManager from '@/utils/audioManager';
 
 const ITEMS_PER_PAGE = 5;
-
-// Item thumbnail crop positions from reference sprite sheets
-// Each entry: [columnIndex, totalColumns, rowIndex, totalRows]
-// columnIndex: 0-based column in the sprite sheet
-// totalColumns: total columns per row
-// rowIndex: 0-based row (default 0 for single-row sprites)
-// totalRows: total rows in the sprite (default 1 for single-row sprites)
-const ITEM_SPRITE_POS: Record<string, [number, number, number, number]> = {
-  // Level 1: 狐族玉坠, 手帕, 铜铃, 木梳, 信笺 (1 row × 5 cols)
-  'fox-jade': [0, 5, 0, 1],
-  'handkerchief': [1, 5, 0, 1],
-  'copper-bell': [2, 5, 0, 1],
-  'wood-comb': [3, 5, 0, 1],
-  'letter': [4, 5, 0, 1],
-  // Level 2: 绣鞋, 玉珏, 书信, 碎银, 木盒 (1 row × 5 cols)
-  'embroidered-shoe': [0, 5, 0, 1],
-  'half-jade': [1, 5, 0, 1],
-  'harsh-letter': [2, 5, 0, 1],
-  'silver-pieces': [3, 5, 0, 1],
-  'carved-box': [4, 5, 0, 1],
-  // Level 3: 密函, 恶霸令牌, 狐佩拓印, 毒糕, 黑珠串 (1 row × 5 cols)
-  'secret-letter': [0, 5, 0, 1],
-  'bully-token': [1, 5, 0, 1],
-  'fox-rubbing': [2, 5, 0, 1],
-  'poison-cake': [3, 5, 0, 1],
-  'black-beads': [4, 5, 0, 1],
-  // Level 4: 鬼母银簪, 狐族秘卷, 护身香包, 旧绢帕, 引路烛 (1 row × 5 cols)
-  'ghost-mother-pin': [0, 5, 0, 1],
-  'fox-scroll': [1, 5, 0, 1],
-  'protection-pouch': [2, 5, 0, 1],
-  'old-kerchief': [3, 5, 0, 1],
-  'guide-candle': [4, 5, 0, 1],
-  // Level 5: 2 rows × 4 cols
-  'gold-hairpin': [0, 4, 0, 2],
-  'hidden-bag': [1, 4, 0, 2],
-  'slander-note': [2, 4, 0, 2],
-  'innocence-token': [3, 4, 0, 2],
-  'exorcism-paper': [0, 4, 1, 2],
-  'copper-thimble': [1, 4, 1, 2],
-  'torn-kerchief': [2, 4, 1, 2],
-  'wooden-comb': [3, 4, 1, 2],
-  // Level 6: 2 rows × 5 cols
-  'divorce-letter': [0, 5, 0, 2],
-  'beating-stick': [1, 5, 0, 2],
-  'bully-contract': [2, 5, 0, 2],
-  'fox-fur-charm': [3, 5, 0, 2],
-  'bamboo-plea': [4, 5, 0, 2],
-  'copper-candlestick': [0, 5, 1, 2],
-  'broken-inkstone': [1, 5, 1, 2],
-  'hemp-ball': [2, 5, 1, 2],
-  'silver-bracelet': [3, 5, 1, 2],
-  'wooden-abacus': [4, 5, 1, 2],
+const LEVEL_CUTSCENES: Record<
+  number,
+  { src: string; fallbackTitle: string; fallbackBody: string }
+> = {
+  1: {
+    src: '/assets/level1-story-progress.mp4',
+    fallbackTitle: '第一关剧情推进',
+    fallbackBody: '过场加载失败，正在进入寻物...',
+  },
+  2: {
+    src: '/assets/level2-ending.mp4',
+    fallbackTitle: '第二关结束剧情',
+    fallbackBody: '过场加载失败，正在进入下一关...',
+  },
 };
 
 const GameLevel = () => {
   const { levelId } = useParams();
   const navigate = useNavigate();
   const level = LEVELS.find((l) => l.id === Number(levelId));
-  const hasLevelIntroVideo = level?.id === 1;
+  const levelCutscene = level ? LEVEL_CUTSCENES[level.id] : undefined;
 
   const [gameState, setGameState] = useState(loadGameState());
   const [foundIds, setFoundIds] = useState<string[]>([]);
@@ -83,6 +45,9 @@ const GameLevel = () => {
   const [showLevelIntroVideo, setShowLevelIntroVideo] = useState(false);
   const [levelIntroVideoError, setLevelIntroVideoError] = useState(false);
   const [levelIntroVideoNeedsStart, setLevelIntroVideoNeedsStart] = useState(false);
+  const [pendingNextLevelAfterVideo, setPendingNextLevelAfterVideo] = useState<number | null>(null);
+  const [showReviveAd, setShowReviveAd] = useState(false);
+  const [reviveAdCountdown, setReviveAdCountdown] = useState(5);
   const [showBuyHint, setShowBuyHint] = useState(false);
   const [showBuyKnife, setShowBuyKnife] = useState(false);
   const [buyHintQty, setBuyHintQty] = useState(1);
@@ -138,6 +103,23 @@ const GameLevel = () => {
     }
   }, [magnetActive]);
 
+  useEffect(() => {
+    if (!showReviveAd) return;
+    setReviveAdCountdown(5);
+
+    const interval = setInterval(() => {
+      setReviveAdCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [showReviveAd]);
+
   // Lose check
   useEffect(() => {
     if (currentLives <= 0 && !showResult) {
@@ -187,7 +169,7 @@ const GameLevel = () => {
       if (clickedItem) {
         setFoundIds((prev) => [...prev, clickedItem.id]);
         setFeedback({ x: clickedItem.x, y: clickedItem.y, type: 'success' });
-        setTimeout(() => setFeedback(null), 1000);
+        setTimeout(() => setFeedback(null), 800);
         toast.success(`找到 ${clickedItem.name}！`, { duration: 1500 });
         if (hintItem === clickedItem.id) setHintItem(null);
         // Play item found sound effect + vibration
@@ -206,8 +188,17 @@ const GameLevel = () => {
   const finishLevelIntroVideo = useCallback(() => {
     setShowLevelIntroVideo(false);
     setLevelIntroVideoError(false);
+    setLevelIntroVideoNeedsStart(false);
+    audioManager.fadeIn(600);
+    if (pendingNextLevelAfterVideo !== null) {
+      const next = pendingNextLevelAfterVideo;
+      setPendingNextLevelAfterVideo(null);
+      navigate(`/play/${next}`);
+      setTimeout(() => window.location.reload(), 100);
+      return;
+    }
     lastActionRef.current = Date.now();
-  }, []);
+  }, [navigate, pendingNextLevelAfterVideo]);
 
   const skipLevelIntroVideo = useCallback(() => {
     if (levelIntroVideoRef.current) {
@@ -218,6 +209,7 @@ const GameLevel = () => {
 
   const startLevelIntroVideoWithSound = useCallback(async () => {
     if (!levelIntroVideoRef.current) return;
+    audioManager.fadeOut(600);
     try {
       levelIntroVideoRef.current.muted = false;
       levelIntroVideoRef.current.volume = 1;
@@ -324,6 +316,7 @@ const GameLevel = () => {
   const reviveByAd = () => {
     setCurrentLives(3);
     setShowResult(null);
+    setShowReviveAd(false);
     toast.success('观看广告成功，恢复 3 生命');
   };
 
@@ -339,6 +332,9 @@ const GameLevel = () => {
     setShowLevelIntroVideo(false);
     setLevelIntroVideoError(false);
     setLevelIntroVideoNeedsStart(false);
+    setPendingNextLevelAfterVideo(null);
+    setShowReviveAd(false);
+    setReviveAdCountdown(5);
     setDialogueIndex(0);
     autoHintTriggeredRef.current = false;
     lastActionRef.current = Date.now();
@@ -348,6 +344,10 @@ const GameLevel = () => {
     const next = level.id + 1;
     if (next > LEVELS.length) {
       navigate('/levels');
+    } else if (levelCutscene) {
+      setShowResult(null);
+      setPendingNextLevelAfterVideo(next);
+      setShowLevelIntroVideo(true);
     } else {
       navigate(`/play/${next}`);
       setTimeout(() => window.location.reload(), 100);
@@ -453,23 +453,10 @@ const GameLevel = () => {
                     height: '80px',
                     borderRadius: '50%',
                     background: 'radial-gradient(circle, rgba(232,195,125,0.8) 0%, rgba(232,195,125,0) 70%)',
-                    animation: 'successBurst 0.8s ease-out',
+                    animation: 'successBurst 0.8s ease-out forwards',
                   }}
                 />
-                {[...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute text-lg"
-                    style={{
-                      left: '50%',
-                      top: '50%',
-                      transform: `rotate(${i * 60}deg) translateY(-30px)`,
-                      animation: 'petalBurst 0.8s ease-out',
-                    }}
-                  >
-                    🌸
-                  </div>
-                ))}
+
               </div>
             ) : (
               <div
@@ -671,7 +658,6 @@ const GameLevel = () => {
             >
               {visibleItems.map((item, idx) => {
                 const found = foundIds.includes(item.id);
-                const spritePos = ITEM_SPRITE_POS[item.id];
                 return (
                   <div key={item.id} className="flex-1 flex items-stretch">
                     {/* Card */}
@@ -689,24 +675,15 @@ const GameLevel = () => {
                         opacity: found ? 0.6 : 1,
                       }}
                     >
-                      {/* Item image cropped from sprite sheet, or emoji fallback */}
-                      {item.image && spritePos ? (
-                        <div
-                          className="w-12 h-14 mb-1 overflow-hidden rounded"
-                          style={{
-                            filter: found ? 'grayscale(80%)' : 'none',
-                          }}
-                        >
-                          <div
-                            className="w-full h-full"
-                            style={{
-                              backgroundImage: `url(${item.image})`,
-                              backgroundSize: `${spritePos[1] * 100}% ${spritePos[3] * 100}%`,
-                              backgroundPosition: `${spritePos[1] > 1 ? (spritePos[0] / (spritePos[1] - 1)) * 100 : 0}% ${spritePos[3] > 1 ? (spritePos[2] / (spritePos[3] - 1)) * 100 : 0}%`,
-                              backgroundRepeat: 'no-repeat',
-                            }}
-                          />
-                        </div>
+                      {/* Item image, or emoji fallback */}
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-12 h-14 mb-1 object-contain"
+                          draggable={false}
+                          style={{ filter: found ? 'grayscale(80%)' : 'none' }}
+                        />
                       ) : (
                         <div
                           className="text-2xl mb-1.5"
@@ -838,58 +815,157 @@ const GameLevel = () => {
       {/* ===== DIALOGS ===== */}
 
       {/* Start Dialogue */}
-      <Dialog open={showStartDialogue} onOpenChange={() => {}}>
-        <DialogContent
-          style={{ background: '#FFF8F2', border: '3px solid #E8C37D', maxWidth: '600px' }}
-          onPointerDownOutside={(e) => e.preventDefault()}
-        >
-          <div className="text-center mb-4">
-            <div className="text-2xl font-bold mb-1" style={{ color: '#4A3728' }}>
-              第 {level.id} 关
-            </div>
-            <div className="text-lg" style={{ color: '#E8C37D' }}>
-              {level.name}
-            </div>
-            <div className="text-xs mt-1" style={{ color: '#8B7355' }}>
-              {'★'.repeat(level.difficulty)}
-              <span style={{ color: '#C4B5A5' }}>{'★'.repeat(4 - level.difficulty)}</span>
-            </div>
-          </div>
-          <div
-            className="rounded-xl p-4 mb-4"
-            style={{ background: '#FFF5EB', border: '1px solid #E8C37D' }}
-          >
-            <div className="text-sm font-bold mb-2" style={{ color: '#E8C37D' }}>
-              【{level.dialogue[dialogueIndex].speaker}】
-            </div>
-            <p className="text-base leading-relaxed" style={{ color: '#4A3728' }}>
-              {level.dialogue[dialogueIndex].text}
-            </p>
-          </div>
-          <div className="text-center text-xs mb-3" style={{ color: '#8B7355' }}>
-            提示：在场景中点击寻找 {level.items.length} 件物品
-          </div>
-          <Button
-            onClick={() => {
-              if (dialogueIndex < level.dialogue.length - 1) {
-                setDialogueIndex(dialogueIndex + 1);
-              } else if (hasLevelIntroVideo) {
-                setShowStartDialogue(false);
-                setShowLevelIntroVideo(true);
-              } else {
-                setShowStartDialogue(false);
-                lastActionRef.current = Date.now();
-              }
-            }}
-            className="w-full py-5"
-            style={{ background: '#E8C37D', color: '#4A3728', border: '2px solid #4A3728' }}
-          >
-            {dialogueIndex < level.dialogue.length - 1 ? '继续 →' : '开始寻物'}
-          </Button>
-        </DialogContent>
-      </Dialog>
+      {(() => {
+        const SPEAKER_CONFIG: Record<string, { emoji: string; bg: string; nameColor: string; avatarSrc?: string; isNarrator?: boolean }> = {
+          '婴宁':     { emoji: '🦊', avatarSrc: '/assets/character-avatar-yingning.png', bg: '#F4A460', nameColor: '#C8601A' },
+          '王母':     { emoji: '👩‍💼', avatarSrc: '/assets/character-avatar-wangpo.png', bg: '#8B9DC3', nameColor: '#3A4A7A' },
+          '王子服':   { emoji: '🧑', avatarSrc: '/assets/character-avatar-wangzifu.png', bg: '#7BAE84', nameColor: '#2D6B3A' },
+          '鬼母':     { emoji: '👻', avatarSrc: '/assets/character-avatar-ghost-mother.png', bg: '#9B7EC8', nameColor: '#5A2D8A' },
+          '恶霸':     { emoji: '😤', avatarSrc: '/assets/character-avatar-bully.png', bg: '#C0504D', nameColor: '#7A1A18' },
+          '恶奴头目': { emoji: '😠', avatarSrc: '/assets/character-avatar-bully.png', bg: '#D9742A', nameColor: '#8A3A00' },
+          '旁白':     { emoji: '📜', bg: '#A0896A', nameColor: '#5A3A1A', isNarrator: true },
+          '内心':     { emoji: '💭', bg: '#B0A0C8', nameColor: '#5A4A7A', isNarrator: true },
+          '？？？':   { emoji: '❓', avatarSrc: '/assets/character-avatar-lingmei.png', bg: '#808080', nameColor: '#3A3A3A' },
+        };
+        const cur = level.dialogue[dialogueIndex];
+        const cfg = SPEAKER_CONFIG[cur.speaker] ?? { emoji: '👤', bg: '#A89878', nameColor: '#5A3A1A' };
+        const isNarrator = !!cfg.isNarrator;
+        return (
+          <Dialog open={showStartDialogue} onOpenChange={() => {}}>
+            <DialogContent
+              style={{ background: '#FFF8F2', border: '3px solid #E8C37D', maxWidth: '640px', padding: '20px 24px' }}
+              onPointerDownOutside={(e) => e.preventDefault()}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="text-base font-bold" style={{ color: '#4A3728' }}>第 {level.id} 关</div>
+                  <div className="text-sm" style={{ color: '#E8C37D' }}>· {level.name}</div>
+                </div>
+                <div className="text-xs" style={{ color: '#8B7355' }}>
+                  {'★'.repeat(Math.min(level.difficulty, 5))}
+                  <span style={{ color: '#C4B5A5' }}>{'★'.repeat(Math.max(0, 5 - level.difficulty))}</span>
+                </div>
+              </div>
 
-      {/* Level intro cutscene for chapter 1 */}
+              <div className="w-full" style={{ borderTop: '1px solid #E8C37D', marginBottom: '16px' }} />
+
+              {isNarrator ? (
+                <div
+                  className="rounded-xl p-4 mb-4 text-center italic"
+                  style={{ background: 'rgba(168,137,106,0.12)', border: '1px dashed #A0896A', minHeight: '80px' }}
+                >
+                  <div className="text-xs font-bold mb-2" style={{ color: cfg.nameColor }}>
+                    —— {cur.speaker} ——
+                  </div>
+                  <p className="text-base leading-relaxed" style={{ color: '#4A3728' }}>
+                    {cur.text}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="flex-shrink-0 flex flex-col items-center gap-1">
+                    <div
+                      className="flex items-center justify-center rounded-2xl overflow-hidden"
+                      style={{
+                        width: '88px',
+                        height: '110px',
+                        background: `linear-gradient(160deg, ${cfg.bg}CC 0%, ${cfg.bg}66 100%)`,
+                        border: `2px solid ${cfg.bg}`,
+                        boxShadow: `0 4px 12px ${cfg.bg}55`,
+                      }}
+                    >
+                      {cfg.avatarSrc ? (
+                        <img
+                          src={cfg.avatarSrc}
+                          alt={cur.speaker}
+                          className="w-full h-full object-cover"
+                          draggable={false}
+                        />
+                      ) : (
+                        <span className="text-3xl">{cfg.emoji}</span>
+                      )}
+                    </div>
+                    <div className="text-xs font-bold" style={{ color: cfg.nameColor }}>
+                      {cur.speaker}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 relative">
+                    <div
+                      className="absolute left-0 top-4"
+                      style={{
+                        width: 0,
+                        height: 0,
+                        borderTop: '8px solid transparent',
+                        borderBottom: '8px solid transparent',
+                        borderRight: `10px solid #E8C37D`,
+                        transform: 'translateX(-10px)',
+                      }}
+                    />
+                    <div
+                      className="rounded-xl p-4"
+                      style={{
+                        background: '#FFF5EB',
+                        border: `2px solid #E8C37D`,
+                        minHeight: '110px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <p className="text-base leading-relaxed" style={{ color: '#4A3728' }}>
+                        {cur.text}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex gap-1">
+                  {level.dialogue.map((_, i) => (
+                    <div
+                      key={i}
+                      className="rounded-full"
+                      style={{
+                        width: i === dialogueIndex ? '16px' : '6px',
+                        height: '6px',
+                        background: i === dialogueIndex ? '#E8C37D' : '#C4B5A5',
+                        transition: 'width 0.2s',
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="text-xs" style={{ color: '#8B7355' }}>
+                  {dialogueIndex + 1} / {level.dialogue.length}
+                </div>
+              </div>
+
+              {dialogueIndex === level.dialogue.length - 1 && (
+                <div className="text-center text-xs mb-2" style={{ color: '#8B7355' }}>
+                  提示：在场景中点击寻找 {level.items.length} 件物品
+                </div>
+              )}
+
+              <Button
+                onClick={() => {
+                  if (dialogueIndex < level.dialogue.length - 1) {
+                    setDialogueIndex(dialogueIndex + 1);
+                  } else {
+                    setShowStartDialogue(false);
+                    lastActionRef.current = Date.now();
+                  }
+                }}
+                className="w-full py-5"
+                style={{ background: '#E8C37D', color: '#4A3728', border: '2px solid #4A3728', fontWeight: 'bold' }}
+              >
+                {dialogueIndex < level.dialogue.length - 1 ? '继续 →' : '⚔ 开始寻物'}
+              </Button>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
+
+      {/* Level transition cutscene */}
       {showLevelIntroVideo && (
         <div
           className="absolute inset-0 z-40 bg-black flex items-center justify-center cursor-pointer"
@@ -904,7 +980,7 @@ const GameLevel = () => {
           {!levelIntroVideoError && (
             <video
               ref={levelIntroVideoRef}
-              src="/assets/level1-story-progress.mp4"
+              src={levelCutscene?.src}
               preload="auto"
               playsInline
               onEnded={finishLevelIntroVideo}
@@ -941,10 +1017,10 @@ const GameLevel = () => {
           {levelIntroVideoError && (
             <div className="text-center animate-pulse px-6">
               <div className="text-3xl font-bold mb-3" style={{ color: '#E8C37D' }}>
-                第一关剧情推进
+                {levelCutscene?.fallbackTitle ?? '剧情推进'}
               </div>
               <div className="text-sm" style={{ color: '#FFF5EB' }}>
-                过场加载失败，正在进入寻物...
+                {levelCutscene?.fallbackBody ?? '过场加载失败，正在继续...'}
               </div>
             </div>
           )}
@@ -1065,7 +1141,7 @@ const GameLevel = () => {
               </div>
               <div className="flex flex-col gap-2">
                 <Button
-                  onClick={reviveByAd}
+                  onClick={() => setShowReviveAd(true)}
                   className="py-5"
                   style={{ background: '#E85D75', color: '#FFF8F2', border: 'none' }}
                 >
@@ -1088,6 +1164,84 @@ const GameLevel = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Placeholder Revive Ad Dialog */}
+      <Dialog open={showReviveAd} onOpenChange={setShowReviveAd}>
+        <DialogContent
+          style={{ background: '#FFF8F2', border: '3px solid #E8C37D', maxWidth: '460px' }}
+          onPointerDownOutside={(e) => e.preventDefault()}
+        >
+          <div className="text-center py-2">
+            <div className="text-2xl font-bold mb-2" style={{ color: '#4A3728' }}>
+              广告播放中
+            </div>
+            <div className="text-sm mb-4" style={{ color: '#8B7355' }}>
+              占位广告弹窗，后续可替换为真实广告 SDK
+            </div>
+
+            <div
+              className="rounded-2xl p-5 mb-4 overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, #1E2D48 0%, #2B3A52 55%, #3A4A6A 100%)',
+                border: '2px solid #C9A84C',
+              }}
+            >
+              <div className="text-xs tracking-[0.3em] mb-3" style={{ color: '#E8D5A0' }}>
+                SPONSORED
+              </div>
+              <div className="text-5xl mb-3">📺</div>
+              <div className="text-xl font-bold mb-2" style={{ color: '#FFF8F2' }}>
+                神秘商铺限时补给
+              </div>
+              <div className="text-sm leading-relaxed" style={{ color: '#E8D5A0' }}>
+                这里是广告占位内容。接入真实广告平台后，可在此展示激励视频或品牌推广素材。
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="flex items-center justify-between text-xs mb-1" style={{ color: '#8B7355' }}>
+                <span>播放进度</span>
+                <span>{reviveAdCountdown > 0 ? `${5 - reviveAdCountdown}/5 秒` : '已完成'}</span>
+              </div>
+              <div
+                className="w-full h-3 rounded-full overflow-hidden"
+                style={{ background: '#F0E8DA', border: '1px solid #E8C37D' }}
+              >
+                <div
+                  className="h-full transition-all duration-1000"
+                  style={{
+                    width: `${((5 - reviveAdCountdown) / 5) * 100}%`,
+                    background: 'linear-gradient(90deg, #E8C37D 0%, #E85D75 100%)',
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowReviveAd(false)}
+                variant="outline"
+                className="flex-1"
+                style={{ borderColor: '#C4B5A5', color: '#8B7355' }}
+              >
+                关闭
+              </Button>
+              <Button
+                onClick={reviveByAd}
+                disabled={reviveAdCountdown > 0}
+                className="flex-1"
+                style={{
+                  background: reviveAdCountdown > 0 ? '#C4B5A5' : '#E85D75',
+                  color: '#FFF8F2',
+                  border: 'none',
+                }}
+              >
+                {reviveAdCountdown > 0 ? `请等待 ${reviveAdCountdown}s` : '领取复活 +3 生命'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

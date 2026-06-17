@@ -111,6 +111,55 @@ class AudioManager {
     this.currentTrack = null;
   }
 
+  private _fadeTimer: ReturnType<typeof setInterval> | null = null;
+  private _preFadeVolume = 0.4;
+
+  fadeTo(targetVolume: number, durationMs = 800): Promise<void> {
+    return new Promise((resolve) => {
+      if (this._fadeTimer !== null) {
+        clearInterval(this._fadeTimer);
+        this._fadeTimer = null;
+      }
+      if (!this.bgmAudio) {
+        resolve();
+        return;
+      }
+      const target = Math.max(0, Math.min(1, targetVolume));
+      const start = this.bgmAudio.volume;
+      const steps = Math.max(1, Math.round(durationMs / 20));
+      const delta = (target - start) / steps;
+      let count = 0;
+      this._fadeTimer = setInterval(() => {
+        count++;
+        if (!this.bgmAudio) {
+          clearInterval(this._fadeTimer!);
+          this._fadeTimer = null;
+          resolve();
+          return;
+        }
+        const next = start + delta * count;
+        this.bgmAudio.volume = Math.max(0, Math.min(1, next));
+        if (count >= steps) {
+          clearInterval(this._fadeTimer!);
+          this._fadeTimer = null;
+          resolve();
+        }
+      }, 20);
+    });
+  }
+
+  fadeOut(durationMs = 800) {
+    if (this.bgmAudio && this.bgmAudio.volume > 0) {
+      this._preFadeVolume = this.bgmAudio.volume;
+    }
+    return this.fadeTo(0, durationMs);
+  }
+
+  fadeIn(durationMs = 800) {
+    const target = this._preFadeVolume > 0 ? this._preFadeVolume : this._bgmVolume;
+    return this.fadeTo(target, durationMs);
+  }
+
   /**
    * Play item found sound effect with cooldown to prevent duplicates.
    * Each call creates a self-contained audio instance that cleans itself up.

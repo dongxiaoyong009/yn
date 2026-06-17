@@ -37,6 +37,25 @@ const ALL_CHAPTERS = [
   { id: 24, name: '青蛇劫法海', icon: '🐉' },
 ];
 
+// Precise clickable regions extracted from the chapter grid artwork (1920x1080).
+// Using per-card bounds avoids the "equal-width grid" drift that caused hover
+// highlights to bleed outside the visible chapter cards.
+const CHAPTER_COLS = [
+  { left: 365, width: 173 },
+  { left: 553, width: 176 },
+  { left: 747, width: 176 },
+  { left: 940, width: 176 },
+  { left: 1136, width: 175 },
+  { left: 1328, width: 175 },
+];
+
+const CHAPTER_ROWS = [
+  { top: 215, height: 183 },
+  { top: 410, height: 182 },
+  { top: 604, height: 180 },
+  { top: 795, height: 182 },
+];
+
 const MainMenu = () => {
   const navigate = useNavigate();
   const [state, setState] = useState(loadGameState());
@@ -250,37 +269,25 @@ const MainMenu = () => {
             alt="关卡网格"
             className="absolute inset-0 w-full h-full object-contain pointer-events-none"
           />
-          {/* Overlay invisible click buttons for each of the 24 cells.
-              The source image is 1920x1080. The 24 card grid area within it:
-              top-left: (366, 197), bottom-right: (1554, 903)
-              grid size: 1188 x 706 pixels
-              
-              Since object-contain is used and the GameCanvas is also 16:9 (1280x720),
-              the image fills the container exactly (no letterboxing).
-              So percentages relative to the container = percentages relative to the image.
-              
-              left: 366/1920 = 19.06%
-              top: 197/1080 = 18.24%
-              width: 1188/1920 = 61.88%
-              height: 706/1080 = 65.37%
-          */}
-          <div
-            className="absolute grid grid-cols-6 grid-rows-4"
-            style={{
-              left: '19.06%',
-              top: '18.24%',
-              width: '61.88%',
-              height: '65.37%',
-              gap: '0px',
-            }}
-          >
-            {Array.from({ length: 24 }, (_, i) => (
+          {/* Overlay precise click buttons for each of the 24 visible cards. */}
+          <div className="absolute inset-0">
+            {ALL_CHAPTERS.map((chapter, i) => {
+              const col = CHAPTER_COLS[i % 6];
+              const row = CHAPTER_ROWS[Math.floor(i / 6)];
+              return (
               <button
-                key={i + 1}
-                onClick={() => handleChapterClick(i + 1)}
-                className="w-full h-full transition-all hover:bg-white/10 hover:scale-105 hover:z-10 active:scale-95 rounded"
+                key={chapter.id}
+                onClick={() => handleChapterClick(chapter.id)}
+                className="absolute transition-all rounded-xl hover:bg-white/10 hover:ring-2 hover:ring-[#E8C37D]/80 active:scale-[0.98]"
+                style={{
+                  left: `${(col.left / 1920) * 100}%`,
+                  top: `${(row.top / 1080) * 100}%`,
+                  width: `${(col.width / 1920) * 100}%`,
+                  height: `${(row.height / 1080) * 100}%`,
+                }}
               />
-            ))}
+            );
+            })}
           </div>
         </div>
       </div>
