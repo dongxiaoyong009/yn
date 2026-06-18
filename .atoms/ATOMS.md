@@ -1,5 +1,5 @@
 ---
-last_updated: 2026-06-01T08:37:26Z
+last_updated: 2026-06-18T00:00:00Z
 status: active
 ---
 
@@ -40,5 +40,4 @@ status: active
 
 ### 数据持久化
 - localStorage: playerIdentity(lingmei|storyteller), hasSeenIntro, completedLevels, lives, hints, coins, dailyGiftDay
-
 

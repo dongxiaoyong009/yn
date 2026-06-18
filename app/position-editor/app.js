@@ -44,6 +44,26 @@ function getHitBox(item) {
   return normalizeItem(item).hitBox;
 }
 
+function getHitBoxLayout(item) {
+  const box = getHitBox(item);
+  const width = box.left + box.right;
+  const height = box.top + box.bottom;
+  const centerOffsetX = (box.right - box.left) / 2;
+  const centerOffsetY = (box.bottom - box.top) / 2;
+  const angle = (box.rotation * Math.PI) / 180;
+  const offsetX = centerOffsetX * Math.cos(angle) - centerOffsetY * Math.sin(angle);
+  const offsetY = centerOffsetX * Math.sin(angle) + centerOffsetY * Math.cos(angle);
+  return {
+    box,
+    width,
+    height,
+    centerX: item.x + offsetX,
+    centerY: item.y + offsetY,
+    pivotX: (box.right / width) * 100,
+    pivotY: (box.bottom / height) * 100,
+  };
+}
+
 function pctFromEvent(e) {
   const rect = el.scene.getBoundingClientRect();
   return {
@@ -128,15 +148,13 @@ function renderForm() {
 }
 
 function buildBoxStyle(item) {
-  const box = getHitBox(item);
-  const width = box.left + box.right;
-  const height = box.top + box.bottom;
+  const { width, height, centerX, centerY } = getHitBoxLayout(item);
   return {
-    left: `${item.x}%`,
-    top: `${item.y}%`,
+    left: `${centerX}%`,
+    top: `${centerY}%`,
     width: `${width}%`,
     height: `${height}%`,
-    transform: `translate(-50%, -50%) rotate(${box.rotation}deg)`,
+    transform: `translate(-50%, -50%) rotate(${getHitBox(item).rotation}deg)`,
   };
 }
 
@@ -147,7 +165,7 @@ function renderScene() {
   el.overlay.innerHTML = '';
 
   lvl.items.forEach((item) => {
-    const box = getHitBox(item);
+    const layout = getHitBoxLayout(item);
     const node = document.createElement('div');
     node.className = `item-overlay ${item.id === state.selectedId ? 'active' : ''}`;
     node.dataset.id = item.id;
@@ -159,11 +177,15 @@ function renderScene() {
 
     const angleLine = document.createElement('div');
     angleLine.className = 'angle-line';
+    angleLine.style.left = `${layout.pivotX}%`;
+    angleLine.style.top = `${layout.pivotY}%`;
     node.appendChild(angleLine);
 
     const center = document.createElement('div');
     center.className = 'item-center';
-    center.title = '拖动中心移动';
+    center.title = '拖动锚点移动';
+    center.style.left = `${layout.pivotX}%`;
+    center.style.top = `${layout.pivotY}%`;
     center.addEventListener('pointerdown', (e) => startDrag(e, item.id, 'move'));
     node.appendChild(center);
 

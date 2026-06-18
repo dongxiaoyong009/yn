@@ -148,7 +148,7 @@ const GameLevel = () => {
   const handleSceneClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!level || !sceneRef.current || showResult || showStartDialogue || showLevelIntroVideo) return;
-      const rect = sceneRef.current.getBoundingClientRect();
+      const rect = e.currentTarget.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / rect.width) * 100;
       const y = ((e.clientY - rect.top) / rect.height) * 100;
 
@@ -157,30 +157,47 @@ const GameLevel = () => {
       // 热区按比例缩放：hitRadius为百分比单位，保证最小48px等效触控区
       const minHitPct = Math.max((48 / rect.width) * 100, (48 / rect.height) * 100);
 
-      const isInsideHitArea = (item: (typeof level.items)[number]) => {
+      const getHitMatch = (item: (typeof level.items)[number]) => {
         if (item.hitBox) {
+          const slop = Math.max(0.6, minHitPct / 8);
           const dx = x - item.x;
           const dy = y - item.y;
           const angle = (-item.hitBox.rotation * Math.PI) / 180;
           const rx = dx * Math.cos(angle) - dy * Math.sin(angle);
           const ry = dx * Math.sin(angle) + dy * Math.cos(angle);
-          return (
-            rx >= -item.hitBox.left &&
-            rx <= item.hitBox.right &&
-            ry >= -item.hitBox.top &&
-            ry <= item.hitBox.bottom
-          );
+          const left = -item.hitBox.left - slop;
+          const right = item.hitBox.right + slop;
+          const top = -item.hitBox.top - slop;
+          const bottom = item.hitBox.bottom + slop;
+          const inside = rx >= left && rx <= right && ry >= top && ry <= bottom;
+          return inside
+            ? {
+                inside,
+                score: Math.min(rx - left, right - rx, ry - top, bottom - ry),
+              }
+            : null;
         }
         const dx = item.x - x;
         const dy = item.y - y;
         const effectiveRadius = Math.max(item.hitRadius, minHitPct / 2);
-        return Math.sqrt(dx * dx + dy * dy) < effectiveRadius;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        return dist < effectiveRadius
+          ? {
+              inside: true,
+              score: effectiveRadius - dist,
+            }
+          : null;
       };
 
-      const clickedItem = level.items.find((item) => {
-        if (foundIds.includes(item.id)) return false;
-        return isInsideHitArea(item);
-      });
+      const clickedItem = level.items.reduce<null | { item: (typeof level.items)[number]; score: number }>((best, item) => {
+        if (foundIds.includes(item.id)) return best;
+        const match = getHitMatch(item);
+        if (!match) return best;
+        if (!best || match.score > best.score) {
+          return { item, score: match.score };
+        }
+        return best;
+      }, null)?.item;
 
       if (clickedItem) {
         setFoundIds((prev) => [...prev, clickedItem.id]);
@@ -372,7 +389,17 @@ const GameLevel = () => {
 
   const totalPages = Math.ceil(level.items.length / ITEMS_PER_PAGE);
   const visibleItems = level.items.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
-
+  const getItemMarkerPosition = (item: (typeof level.items)[number]) => {
+    if (!item.hitBox) {
+      return { x: item.x, y: item.y };
+    }
+    const centerOffsetX = (item.hitBox.right - item.hitBox.left) / 2;
+    const centerOffsetY = (item.hitBox.bottom - item.hitBox.top) / 2;
+    const angle = (item.hitBox.rotation * Math.PI) / 180;
+    const offsetX = centerOffsetX * Math.cos(angle) - centerOffsetY * Math.sin(angle);
+    const offsetY = centerOffsetX * Math.sin(angle) + centerOffsetY * Math.cos(angle);
+    return { x: item.x + offsetX, y: item.y + offsetY };
+  };
   return (
     <GameCanvas>
     <div className="w-full h-full overflow-hidden relative">
@@ -440,8 +467,8 @@ const GameLevel = () => {
               key={item.id}
               className="absolute pointer-events-none text-2xl"
               style={{
-                left: `${item.x}%`,
-                top: `${item.y}%`,
+                left: `${getItemMarkerPosition(item).x}%`,
+                top: `${getItemMarkerPosition(item).y}%`,
                 transform: 'translate(-50%, -50%)',
                 filter: 'drop-shadow(0 0 8px #7EC8A0)',
                 color: '#7EC8A0',

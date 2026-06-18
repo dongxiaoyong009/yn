@@ -82,12 +82,15 @@ function extractLevelBlock(source, levelId) {
 function extractItemsBlock(levelBlock) {
   const itemsIndex = levelBlock.text.indexOf('items: [');
   if (itemsIndex === -1) return null;
+  const lineStart = levelBlock.text.lastIndexOf('\n', itemsIndex) + 1;
   const arrayStart = levelBlock.text.indexOf('[', itemsIndex);
   const arrayEnd = findMatching(levelBlock.text, arrayStart, '[', ']');
   if (arrayEnd === -1) return null;
+  let end = arrayEnd + 1;
+  if (levelBlock.text[end] === ',') end += 1;
   return {
-    start: arrayStart,
-    end: arrayEnd + 1,
+    start: lineStart,
+    end,
     text: levelBlock.text.slice(arrayStart, arrayEnd + 1),
   };
 }
