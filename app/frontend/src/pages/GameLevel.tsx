@@ -157,13 +157,29 @@ const GameLevel = () => {
       // 热区按比例缩放：hitRadius为百分比单位，保证最小48px等效触控区
       const minHitPct = Math.max((48 / rect.width) * 100, (48 / rect.height) * 100);
 
-      const clickedItem = level.items.find((item) => {
-        if (foundIds.includes(item.id)) return false;
+      const isInsideHitArea = (item: (typeof level.items)[number]) => {
+        if (item.hitBox) {
+          const dx = x - item.x;
+          const dy = y - item.y;
+          const angle = (-item.hitBox.rotation * Math.PI) / 180;
+          const rx = dx * Math.cos(angle) - dy * Math.sin(angle);
+          const ry = dx * Math.sin(angle) + dy * Math.cos(angle);
+          return (
+            rx >= -item.hitBox.left &&
+            rx <= item.hitBox.right &&
+            ry >= -item.hitBox.top &&
+            ry <= item.hitBox.bottom
+          );
+        }
         const dx = item.x - x;
         const dy = item.y - y;
-        // 使用hitRadius和最小触控热区中较大的值
         const effectiveRadius = Math.max(item.hitRadius, minHitPct / 2);
         return Math.sqrt(dx * dx + dy * dy) < effectiveRadius;
+      };
+
+      const clickedItem = level.items.find((item) => {
+        if (foundIds.includes(item.id)) return false;
+        return isInsideHitArea(item);
       });
 
       if (clickedItem) {
@@ -360,15 +376,16 @@ const GameLevel = () => {
   return (
     <GameCanvas>
     <div className="w-full h-full overflow-hidden relative">
-      {/* ===== FULL SCREEN SCENE BACKGROUND - 自适应16:9/18:9/19.5:9 ===== */}
+      {/* ===== FULL SCREEN SCENE BACKGROUND - fixed 16:9 image mapping ===== */}
       <div
         ref={sceneRef}
         onClick={handleSceneClick}
         className="absolute inset-0 cursor-pointer scene-hitarea"
         style={{
           backgroundImage: `url(${level.background})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundSize: '100% 100%',
+          backgroundPosition: '0 0',
+          backgroundRepeat: 'no-repeat',
         }}
       >
         {/* Hint highlight */}
