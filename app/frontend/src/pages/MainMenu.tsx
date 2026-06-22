@@ -39,25 +39,6 @@ const ALL_CHAPTERS = [
   { id: 24, name: '青蛇劫法海', icon: '🐉' },
 ];
 
-// Precise clickable regions extracted from the chapter grid artwork (1920x1080).
-// Using per-card bounds avoids the "equal-width grid" drift that caused hover
-// highlights to bleed outside the visible chapter cards.
-const CHAPTER_COLS = [
-  { left: 365, width: 173 },
-  { left: 553, width: 176 },
-  { left: 747, width: 176 },
-  { left: 940, width: 176 },
-  { left: 1136, width: 175 },
-  { left: 1328, width: 175 },
-];
-
-const CHAPTER_ROWS = [
-  { top: 215, height: 183 },
-  { top: 410, height: 182 },
-  { top: 604, height: 180 },
-  { top: 795, height: 182 },
-];
-
 const MainMenu = () => {
   const navigate = useNavigate();
   const [state, setState] = useState(loadGameState());
@@ -219,14 +200,13 @@ const MainMenu = () => {
       </div>
 
       {/* ===== TOP RIGHT: Currency ===== */}
-      <div className="absolute top-2 right-3 z-30 flex items-center gap-2">
-        {/* Currency bar image */}
+      <div className="absolute top-4 right-24 z-30 flex items-center">
         <img
-          src={assetPath('/assets/currency-bar.png')}
+          src={assetPath('/assets/currency-bar-compact.png')}
           alt="金币钻石"
           className="object-contain"
           style={{
-            height: '540px',
+            width: '249px',
             filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))',
           }}
         />
@@ -254,43 +234,31 @@ const MainMenu = () => {
         />
       </button>
 
-      {/* ===== MAIN CONTENT: Level Grid (full image, 24 clickable areas) ===== */}
-      <div className="absolute inset-0 flex items-center justify-center z-10">
+      {/* ===== MAIN CONTENT: Chapter cards ===== */}
+      <div className="absolute inset-0 z-10 flex items-center justify-center px-[19%] pt-[15%] pb-[8%]">
         <div
-          className="relative"
+          className="grid grid-cols-6 grid-rows-4 gap-x-[1.6%] gap-y-[2.5%] w-full h-full"
           style={{
-            /* Show the full level-grid-ui.png image maintaining its 1920:1080 (16:9) aspect ratio.
-               Size it to fill most of the canvas while leaving room for top/bottom UI */
-            width: '100%',
-            height: '100%',
+            maxWidth: '1160px',
+            maxHeight: '772px',
           }}
         >
-          {/* Full image displayed at 100% of container */}
-          <img
-            src={assetPath('/assets/level-grid-ui.png')}
-            alt="关卡网格"
-            className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-          />
-          {/* Overlay precise click buttons for each of the 24 visible cards. */}
-          <div className="absolute inset-0">
-            {ALL_CHAPTERS.map((chapter, i) => {
-              const col = CHAPTER_COLS[i % 6];
-              const row = CHAPTER_ROWS[Math.floor(i / 6)];
-              return (
+          {ALL_CHAPTERS.map((chapter) => (
+            <div key={chapter.id} className="flex items-center justify-center min-w-0 min-h-0">
               <button
-                key={chapter.id}
                 onClick={() => handleChapterClick(chapter.id)}
-                className="absolute transition-all rounded-xl hover:bg-white/10 hover:ring-2 hover:ring-[#E8C37D]/80 active:scale-[0.98]"
-                style={{
-                  left: `${(col.left / 1920) * 100}%`,
-                  top: `${(row.top / 1080) * 100}%`,
-                  width: `${(col.width / 1920) * 100}%`,
-                  height: `${(row.height / 1080) * 100}%`,
-                }}
-              />
-            );
-            })}
-          </div>
+                className="h-full w-full max-h-full max-w-full rounded-lg transition-transform hover:scale-[1.04] active:scale-[0.98]"
+                aria-label={`进入${chapter.name}章节`}
+              >
+                <img
+                  src={assetPath(`/assets/chapter-cards/chapter-${String(chapter.id).padStart(2, '0')}.png`)}
+                  alt={chapter.name}
+                  className="h-full w-full object-contain drop-shadow-md"
+                  draggable={false}
+                />
+              </button>
+            </div>
+          ))}
         </div>
       </div>
 

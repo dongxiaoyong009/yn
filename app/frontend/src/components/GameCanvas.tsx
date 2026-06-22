@@ -6,6 +6,8 @@ interface GameCanvasProps {
 }
 
 const ASPECT_RATIO = 16 / 9;
+const DESIGN_WIDTH = 1920;
+const DESIGN_HEIGHT = 1080;
 
 /**
  * Calculate the correct canvas size for the current viewport.
@@ -29,9 +31,10 @@ function calculateSize() {
 
 /**
  * Fixed 16:9 landscape game canvas.
- * Uses width/height sizing (not transform) to fit the viewport while maintaining aspect ratio.
- * Centers with black letterboxing on non-matching viewports.
- * Works correctly inside iframes (App Viewer) and standalone browsers.
+ * The visible viewport is fitted to 16:9, then the game UI is rendered on a
+ * fixed 1920x1080 design stage and scaled as one unit. This keeps fixed-size
+ * buttons, text, hit areas, and absolute-positioned UI visually proportional
+ * when the browser viewport changes.
  */
 const GameCanvas = ({ children, className = '' }: GameCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -59,7 +62,17 @@ const GameCanvas = ({ children, className = '' }: GameCanvasProps) => {
           height: `${size.height}px`,
         }}
       >
-        {children}
+        <div
+          className="absolute left-0 top-0 overflow-hidden"
+          style={{
+            width: `${DESIGN_WIDTH}px`,
+            height: `${DESIGN_HEIGHT}px`,
+            transform: `scale(${size.width / DESIGN_WIDTH})`,
+            transformOrigin: 'top left',
+          }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

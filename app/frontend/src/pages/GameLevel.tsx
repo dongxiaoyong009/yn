@@ -748,13 +748,15 @@ const GameLevel = () => {
                     >
                       {/* Item image, or emoji fallback */}
                       {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-12 h-14 mb-1 object-contain"
-                          draggable={false}
-                          style={{ filter: found ? 'grayscale(80%)' : 'none' }}
-                        />
+                        <div className="w-12 h-[35px] mb-1 overflow-hidden flex items-start justify-center">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-12 h-12 object-contain shrink-0"
+                            draggable={false}
+                            style={{ filter: found ? 'grayscale(80%)' : 'none' }}
+                          />
+                        </div>
                       ) : (
                         <div
                           className="text-2xl mb-1.5"
@@ -764,7 +766,7 @@ const GameLevel = () => {
                         </div>
                       )}
                       <div
-                        className="text-[11px] font-medium text-center leading-tight"
+                        className="text-sm font-medium text-center leading-tight"
                         style={{ color: found ? '#7EC8A0' : '#4A3728' }}
                       >
                         {item.name}

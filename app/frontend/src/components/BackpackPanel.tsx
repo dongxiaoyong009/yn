@@ -135,12 +135,14 @@ export default function BackpackPanel({ state, onClose }: BackpackPanelProps) {
 
                 {/* Item image */}
                 {item.image ? (
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-12 h-12 object-contain mb-1"
-                    draggable={false}
-                  />
+                  <div className="w-12 h-[35px] mb-1 overflow-hidden flex items-start justify-center">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-12 h-12 object-contain shrink-0"
+                      draggable={false}
+                    />
+                  </div>
                 ) : (
                   <div className="text-2xl mb-1">{item.icon}</div>
                 )}

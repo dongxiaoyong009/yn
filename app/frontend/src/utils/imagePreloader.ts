@@ -218,15 +218,15 @@ export const CRITICAL_IMAGE_ASSETS: string[] = [
   assetPath('/assets/identity-select-design.png'),
   assetPath('/assets/main-menu-daytime-bg.jpg'),
   assetPath('/assets/main-menu-night-bg.jpg'),
+  assetPath('/assets/character-badge-lingmei.png'),
   assetPath('/assets/title-banner.png'),
   assetPath('/assets/start-game-btn.png'),
   assetPath('/assets/settings-btn.png'),
-  assetPath('/assets/currency-bar.png'),
-  assetPath('/assets/ui-resource-bar.png'),
-  assetPath('/assets/ui-baozhuang-btn.png'),
-  assetPath('/assets/level-grid-ui.png'),
-  assetPath('/assets/backpack-bg.png'),
-  assetPath('/assets/package-icon.png'),
+  assetPath('/assets/currency-bar-compact.png'),
+  assetPath('/assets/backpack-icon.png'),
+  ...Array.from({ length: 24 }, (_, index) =>
+    assetPath(`/assets/chapter-cards/chapter-${String(index + 1).padStart(2, '0')}.png`)
+  ),
 ];
 
 export const DIALOG_IMAGE_ASSETS: string[] = [
@@ -274,6 +274,11 @@ export function getAllCriticalResources(): ResourceItem[] {
 }
 
 export function getBackgroundResources(): ResourceItem[] {
+  const levelBackgroundResources = LEVELS.map((level) => ({
+    url: level.background,
+    type: 'image' as const,
+  }));
+
   const targetItemResources = LEVELS.flatMap((level) =>
     level.items
       .map((item) => item.image)
@@ -282,6 +287,7 @@ export function getBackgroundResources(): ResourceItem[] {
   );
 
   return [
+    ...levelBackgroundResources,
     ...DIALOG_IMAGE_ASSETS.map((url) => ({ url, type: 'image' as const })),
     ...targetItemResources,
     ...BACKGROUND_VIDEO_ASSETS.map((url) => ({ url, type: 'video' as const })),
