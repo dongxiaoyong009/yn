@@ -141,7 +141,7 @@ const BlogPostPage = () => {
   }, [post, location.pathname]);
 
   if (slug === '*') {
-    return <Navigate to="/blog/" replace />;
+    return <Navigate to="/blog/" replace relative="path" />;
   }
 
   if (!post) {

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import GameCanvas from '@/components/GameCanvas';
 import audioManager from '@/utils/audioManager';
 import BackpackPanel from '@/components/BackpackPanel';
+import { assetPath } from '@/utils/assetPath';
 
 // All 24 chapters data
 const ALL_CHAPTERS = [
@@ -90,7 +91,7 @@ const MainMenu = () => {
   // Determine day/night based on actual time (6:00-18:00 = day, else = night)
   const currentHour = new Date().getHours();
   const isDaytime = currentHour >= 6 && currentHour < 18;
-  const bgImage = isDaytime ? '/assets/main-menu-daytime-bg.jpg' : '/assets/main-menu-night-bg.jpg';
+  const bgImage = isDaytime ? assetPath('/assets/main-menu-daytime-bg.jpg') : assetPath('/assets/main-menu-night-bg.jpg');
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -194,7 +195,7 @@ const MainMenu = () => {
       {/* ===== TOP LEFT: Character Badge ===== */}
       <div className="absolute left-2 z-30" style={{ top: '-40px' }}>
         <img
-          src="/assets/character-badge-lingmei.png"
+          src={assetPath('/assets/character-badge-lingmei.png')}
           alt={identityName}
           className="w-auto object-contain drop-shadow-lg"
           style={{
@@ -207,7 +208,7 @@ const MainMenu = () => {
       {/* ===== TOP CENTER: Title Banner ===== */}
       <div className="absolute top-8 left-1/2 -translate-x-1/2 z-30">
         <img
-          src="/assets/title-banner.png"
+          src={assetPath('/assets/title-banner.png')}
           alt="寻物之旅"
           className="object-contain"
           style={{
@@ -221,7 +222,7 @@ const MainMenu = () => {
       <div className="absolute top-2 right-3 z-30 flex items-center gap-2">
         {/* Currency bar image */}
         <img
-          src="/assets/currency-bar.png"
+          src={assetPath('/assets/currency-bar.png')}
           alt="金币钻石"
           className="object-contain"
           style={{
@@ -246,7 +247,7 @@ const MainMenu = () => {
         }}
       >
         <img
-          src="/assets/settings-btn.png"
+          src={assetPath('/assets/settings-btn.png')}
           alt="设置"
           className="w-full h-full object-contain"
           style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
@@ -266,7 +267,7 @@ const MainMenu = () => {
         >
           {/* Full image displayed at 100% of container */}
           <img
-            src="/assets/level-grid-ui.png"
+            src={assetPath('/assets/level-grid-ui.png')}
             alt="关卡网格"
             className="absolute inset-0 w-full h-full object-contain pointer-events-none"
           />
@@ -300,7 +301,7 @@ const MainMenu = () => {
           className="relative transition-all hover:scale-110 active:scale-95"
         >
           <img
-            src="/assets/backpack-icon.png"
+            src={assetPath('/assets/backpack-icon.png')}
             alt="背包"
             className="object-contain drop-shadow-lg"
             style={{
@@ -319,7 +320,7 @@ const MainMenu = () => {
           className="relative transition-all hover:scale-105 active:scale-95"
         >
           <img
-            src="/assets/start-game-btn.png"
+            src={assetPath('/assets/start-game-btn.png')}
             alt="开始游戏"
             className="object-contain drop-shadow-lg"
             style={{

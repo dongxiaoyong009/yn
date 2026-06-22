@@ -6,6 +6,7 @@ import { LEVELS, loadGameState, saveGameState } from '@/data/gameData';
 import { toast } from 'sonner';
 import GameCanvas from '@/components/GameCanvas';
 import audioManager from '@/utils/audioManager';
+import { assetPath } from '@/utils/assetPath';
 
 const ITEMS_PER_PAGE = 5;
 const LEVEL_CUTSCENES: Record<
@@ -13,12 +14,12 @@ const LEVEL_CUTSCENES: Record<
   { src: string; fallbackTitle: string; fallbackBody: string }
 > = {
   1: {
-    src: '/assets/level1-story-progress.mp4',
+    src: assetPath('/assets/level1-story-progress.mp4'),
     fallbackTitle: '第一关剧情推进',
     fallbackBody: '过场加载失败，正在进入寻物...',
   },
   2: {
-    src: '/assets/level2-ending.mp4',
+    src: assetPath('/assets/level2-ending.mp4'),
     fallbackTitle: '第二关结束剧情',
     fallbackBody: '过场加载失败，正在进入下一关...',
   },
@@ -887,15 +888,15 @@ const GameLevel = () => {
       {/* Start Dialogue */}
       {(() => {
         const SPEAKER_CONFIG: Record<string, { emoji: string; bg: string; nameColor: string; avatarSrc?: string; isNarrator?: boolean }> = {
-          '婴宁':     { emoji: '🦊', avatarSrc: '/assets/character-avatar-yingning.png', bg: '#F4A460', nameColor: '#C8601A' },
-          '王母':     { emoji: '👩‍💼', avatarSrc: '/assets/character-avatar-wangpo.png', bg: '#8B9DC3', nameColor: '#3A4A7A' },
-          '王子服':   { emoji: '🧑', avatarSrc: '/assets/character-avatar-wangzifu.png', bg: '#7BAE84', nameColor: '#2D6B3A' },
-          '鬼母':     { emoji: '👻', avatarSrc: '/assets/character-avatar-ghost-mother.png', bg: '#9B7EC8', nameColor: '#5A2D8A' },
-          '恶霸':     { emoji: '😤', avatarSrc: '/assets/character-avatar-bully.png', bg: '#C0504D', nameColor: '#7A1A18' },
-          '恶奴头目': { emoji: '😠', avatarSrc: '/assets/character-avatar-bully.png', bg: '#D9742A', nameColor: '#8A3A00' },
+          '婴宁':     { emoji: '🦊', avatarSrc: assetPath('/assets/character-avatar-yingning.png'), bg: '#F4A460', nameColor: '#C8601A' },
+          '王母':     { emoji: '👩‍💼', avatarSrc: assetPath('/assets/character-avatar-wangpo.png'), bg: '#8B9DC3', nameColor: '#3A4A7A' },
+          '王子服':   { emoji: '🧑', avatarSrc: assetPath('/assets/character-avatar-wangzifu.png'), bg: '#7BAE84', nameColor: '#2D6B3A' },
+          '鬼母':     { emoji: '👻', avatarSrc: assetPath('/assets/character-avatar-ghost-mother.png'), bg: '#9B7EC8', nameColor: '#5A2D8A' },
+          '恶霸':     { emoji: '😤', avatarSrc: assetPath('/assets/character-avatar-bully.png'), bg: '#C0504D', nameColor: '#7A1A18' },
+          '恶奴头目': { emoji: '😠', avatarSrc: assetPath('/assets/character-avatar-bully.png'), bg: '#D9742A', nameColor: '#8A3A00' },
           '旁白':     { emoji: '📜', bg: '#A0896A', nameColor: '#5A3A1A', isNarrator: true },
           '内心':     { emoji: '💭', bg: '#B0A0C8', nameColor: '#5A4A7A', isNarrator: true },
-          '？？？':   { emoji: '❓', avatarSrc: '/assets/character-avatar-lingmei.png', bg: '#808080', nameColor: '#3A3A3A' },
+          '？？？':   { emoji: '❓', avatarSrc: assetPath('/assets/character-avatar-lingmei.png'), bg: '#808080', nameColor: '#3A3A3A' },
         };
         const cur = level.dialogue[dialogueIndex];
         const cfg = SPEAKER_CONFIG[cur.speaker] ?? { emoji: '👤', bg: '#A89878', nameColor: '#5A3A1A' };
@@ -1103,7 +1104,7 @@ const GameLevel = () => {
               }}
               className="bg-transparent border-none cursor-pointer p-0 hover:scale-105 active:scale-95 transition-transform"
             >
-              <img src="/assets/skip-button.png" alt="跳过剧情" className="h-24 md:h-28 w-auto drop-shadow-lg" />
+              <img src={assetPath('/assets/skip-button.png')} alt="跳过剧情" className="h-24 md:h-28 w-auto drop-shadow-lg" />
             </button>
           </div>
         </div>

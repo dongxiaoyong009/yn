@@ -3,6 +3,7 @@ import { loadGameState, saveGameState, Identity } from '@/data/gameData';
 import { useState, useMemo, useEffect } from 'react';
 import GameCanvas from '@/components/GameCanvas';
 import audioManager from '@/utils/audioManager';
+import { assetPath } from '@/utils/assetPath';
 
 const IdentitySelect = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ const IdentitySelect = () => {
     return hour >= 6 && hour < 18;
   }, []);
 
-  const bgImage = isDaytime ? '/assets/main-menu-daytime-bg.jpg' : '/assets/main-menu-night-bg.jpg';
+  const bgImage = isDaytime ? assetPath('/assets/main-menu-daytime-bg.jpg') : assetPath('/assets/main-menu-night-bg.jpg');
 
   const handleSelect = (identity: Identity) => {
     setSelected(identity);
@@ -43,7 +44,7 @@ const IdentitySelect = () => {
         {/* Use img tag to ensure the design image renders */}
         <div className="relative" style={{ aspectRatio: '1/1', height: '85%' }}>
           <img
-            src="/assets/identity-select-design.png"
+            src={assetPath('/assets/identity-select-design.png')}
             alt="角色选择"
             className="h-full w-full object-contain"
             draggable={false}

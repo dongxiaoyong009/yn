@@ -26,8 +26,10 @@ process.env.VITE_APP_LOGO_URL ??= process.env.OVERVIEW_LOGO_URL ?? 'https://publ
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
   const blogPrerenderRoutes = command === 'build' ? getBlogRoutes() : [];
+  const base = process.env.VITE_BASE_PATH ?? process.env.BASE_PATH ?? '/';
 
   return {
+    base,
     plugins: [
       viteSourceLocator({
         prefix: 'mgx', // Prefix used to identify source locations; do not change.

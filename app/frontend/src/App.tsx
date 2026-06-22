@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
 import SplashScreen from '@/components/SplashScreen';
 import LevelLoader from '@/components/LevelLoader';
 import PageTransition from '@/components/PageTransition';
+import { routerBasename } from '@/utils/assetPath';
 import Index from './pages/Index';
 import Intro from './pages/Intro';
 import IdentitySelect from './pages/IdentitySelect';
@@ -44,7 +45,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter basename={routerBasename()}>
           <Routes>
             <Route path="/" element={<PageTransition><Index /></PageTransition>} />
             <Route path="/intro" element={<PageTransition><Intro /></PageTransition>} />

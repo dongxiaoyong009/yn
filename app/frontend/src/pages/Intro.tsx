@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { loadGameState, saveGameState } from '@/data/gameData';
 import GameCanvas from '@/components/GameCanvas';
 import { getPreloadedVideoSrc } from '@/utils/imagePreloader';
+import { assetPath } from '@/utils/assetPath';
 
-const INTRO_VIDEO_SRC = '/assets/intro-animation.mp4';
+const INTRO_VIDEO_SRC = assetPath('/assets/intro-animation.mp4');
 
 const Intro = () => {
   const navigate = useNavigate();
@@ -182,7 +183,7 @@ const Intro = () => {
           className="bg-transparent border-none p-0 transition-transform disabled:opacity-0 disabled:pointer-events-none hover:scale-105 active:scale-95"
         >
           <img
-            src="/assets/skip-button.png"
+            src={assetPath('/assets/skip-button.png')}
             alt="跳过"
             className="h-56 md:h-64 w-auto drop-shadow-lg"
             onError={(e) => {

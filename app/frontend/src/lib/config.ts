@@ -1,3 +1,5 @@
+import { assetPath } from '@/utils/assetPath';
+
 // Runtime configuration
 let runtimeConfig: {
   API_BASE_URL: string;
@@ -19,11 +21,16 @@ export async function loadRuntimeConfig(): Promise<void> {
     // Try to load configuration from a config endpoint
     const controller = new AbortController();
     timeout = window.setTimeout(() => controller.abort(), 1500);
-    const response = await fetch('/api/config', { signal: controller.signal });
+    const configUrl = assetPath('/api/config');
+    let response = await fetch(configUrl, { signal: controller.signal });
+    let contentType = response.headers.get('content-type');
+    if ((!response.ok || !contentType?.includes('application/json')) && configUrl !== '/api/config') {
+      response = await fetch('/api/config', { signal: controller.signal });
+      contentType = response.headers.get('content-type');
+    }
     window.clearTimeout(timeout);
     timeout = undefined;
     if (response.ok) {
-      const contentType = response.headers.get('content-type');
       // Only parse as JSON if the response is actually JSON
       if (contentType && contentType.includes('application/json')) {
         runtimeConfig = await response.json();

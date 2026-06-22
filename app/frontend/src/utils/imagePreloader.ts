@@ -4,6 +4,7 @@
  */
 
 import { LEVELS } from '@/data/gameData';
+import { assetPath } from '@/utils/assetPath';
 
 export interface PreloadResult {
   loaded: number;
@@ -214,38 +215,38 @@ export async function preloadImages(
 
 // Critical image assets that must be loaded before showing the app
 export const CRITICAL_IMAGE_ASSETS: string[] = [
-  '/assets/identity-select-design.png',
-  '/assets/main-menu-daytime-bg.jpg',
-  '/assets/main-menu-night-bg.jpg',
-  '/assets/title-banner.png',
-  '/assets/start-game-btn.png',
-  '/assets/settings-btn.png',
-  '/assets/currency-bar.png',
-  '/assets/ui-resource-bar.png',
-  '/assets/ui-baozhuang-btn.png',
-  '/assets/level-grid-ui.png',
-  '/assets/backpack-bg.png',
-  '/assets/package-icon.png',
+  assetPath('/assets/identity-select-design.png'),
+  assetPath('/assets/main-menu-daytime-bg.jpg'),
+  assetPath('/assets/main-menu-night-bg.jpg'),
+  assetPath('/assets/title-banner.png'),
+  assetPath('/assets/start-game-btn.png'),
+  assetPath('/assets/settings-btn.png'),
+  assetPath('/assets/currency-bar.png'),
+  assetPath('/assets/ui-resource-bar.png'),
+  assetPath('/assets/ui-baozhuang-btn.png'),
+  assetPath('/assets/level-grid-ui.png'),
+  assetPath('/assets/backpack-bg.png'),
+  assetPath('/assets/package-icon.png'),
 ];
 
 export const DIALOG_IMAGE_ASSETS: string[] = [
-  '/assets/character-avatar-yingning.png',
-  '/assets/character-avatar-wangpo.png',
-  '/assets/character-avatar-wangzifu.png',
-  '/assets/character-avatar-ghost-mother.png',
-  '/assets/character-avatar-bully.png',
-  '/assets/character-avatar-lingmei.png',
-  '/assets/skip-button.png',
+  assetPath('/assets/character-avatar-yingning.png'),
+  assetPath('/assets/character-avatar-wangpo.png'),
+  assetPath('/assets/character-avatar-wangzifu.png'),
+  assetPath('/assets/character-avatar-ghost-mother.png'),
+  assetPath('/assets/character-avatar-bully.png'),
+  assetPath('/assets/character-avatar-lingmei.png'),
+  assetPath('/assets/skip-button.png'),
 ];
 
 // Critical video assets
 export const CRITICAL_VIDEO_ASSETS: string[] = [
-  '/assets/intro-animation.mp4',
+  assetPath('/assets/intro-animation.mp4'),
 ];
 
 export const BACKGROUND_VIDEO_ASSETS: string[] = [
-  '/assets/level1-story-progress.mp4',
-  '/assets/level2-ending.mp4',
+  assetPath('/assets/level1-story-progress.mp4'),
+  assetPath('/assets/level2-ending.mp4'),
 ];
 
 // Critical audio assets (BGM and sound effects)
@@ -298,8 +299,8 @@ export function getLevelAssets(levelId: number): ResourceItem[] {
 
   const assets: ResourceItem[] = [
     { url: level.background, type: 'image' },
-    { url: `/assets/ui-back-btn.jpg`, type: 'image' },
-    { url: `/assets/ui-item-list.jpg`, type: 'image' },
+    { url: assetPath('/assets/ui-back-btn.jpg'), type: 'image' },
+    { url: assetPath('/assets/ui-item-list.jpg'), type: 'image' },
     ...DIALOG_IMAGE_ASSETS.map((url) => ({ url, type: 'image' as const })),
   ];
 

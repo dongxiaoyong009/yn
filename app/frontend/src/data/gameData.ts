@@ -1,4 +1,5 @@
 // 聊斋奇谭 - 婴宁篇游戏数据
+import { assetPath } from '@/utils/assetPath';
 
 export interface HiddenItem {
   id: string;
@@ -37,26 +38,26 @@ export const SCENE_IMAGES = {
   scene04: 'https://mgx-backend-cdn.metadl.com/generate/images/1123964/2026-06-01/pvj442qaahfq/scene-04-flower-pavilion.png',
   scene05: 'https://mgx-backend-cdn.metadl.com/generate/images/1123964/2026-06-01/pvj5rtqaahfq/scene-05-west-window.png',
   scene06: 'https://mgx-backend-cdn.metadl.com/generate/images/1123964/2026-06-01/pvj5slyaahgq/scene-06-moonlit-pavilion.png',
-  scene07: '/assets/level7-bg.jpg',
-  scene08: '/assets/level8-bg.jpg',
-  scene09: '/assets/level9-bg.jpg',
-  scene10: '/assets/level10-bg.jpg',
+  scene07: assetPath('/assets/level7-bg.jpg'),
+  scene08: assetPath('/assets/level8-bg.jpg'),
+  scene09: assetPath('/assets/level9-bg.jpg'),
+  scene10: assetPath('/assets/level10-bg.jpg'),
   mainMenu: 'https://mgx-backend-cdn.metadl.com/generate/images/1123964/2026-06-01/pvj6lqyaahfq/main-menu-bg.png',
   lingmei: 'https://mgx-backend-cdn.metadl.com/generate/images/1123964/2026-06-01/pvkap6qaahha/character-lingmei.png',
   storyteller: 'https://mgx-backend-cdn.metadl.com/generate/images/1123964/2026-06-01/pvkaqqqaahia/character-storyteller.png',
 };
 
 const LEVEL_SCENE_ASSETS: Record<number, string> = {
-  1: '/assets/level1-bg.jpg',
-  2: '/assets/level2-bg.jpg',
-  3: '/assets/level3-bg.jpg',
-  4: '/assets/level4-bg.jpg',
-  5: '/assets/level5-bg.jpg',
-  6: '/assets/level6-bg.jpg',
-  7: '/assets/level7-bg.jpg',
-  8: '/assets/level8-bg.jpg',
-  9: '/assets/level9-bg.jpg',
-  10: '/assets/level10-bg.jpg',
+  1: assetPath('/assets/level1-bg.jpg'),
+  2: assetPath('/assets/level2-bg.jpg'),
+  3: assetPath('/assets/level3-bg.jpg'),
+  4: assetPath('/assets/level4-bg.jpg'),
+  5: assetPath('/assets/level5-bg.jpg'),
+  6: assetPath('/assets/level6-bg.jpg'),
+  7: assetPath('/assets/level7-bg.jpg'),
+  8: assetPath('/assets/level8-bg.jpg'),
+  9: assetPath('/assets/level9-bg.jpg'),
+  10: assetPath('/assets/level10-bg.jpg'),
 };
 
 const LEVEL_TARGET_ASSETS: Record<number, string[]> = {
@@ -175,7 +176,7 @@ const LEVEL_TARGET_ASSETS: Record<number, string[]> = {
 
 const getTargetImagePath = (levelId: number, index: number) => {
   const filename = LEVEL_TARGET_ASSETS[levelId]?.[index];
-  return filename ? `/assets/target-ui/${filename}` : undefined;
+  return filename ? assetPath(`/assets/target-ui/${filename}`) : undefined;
 };
 
 const RAW_LEVELS: Level[] = [
