@@ -5,6 +5,26 @@
 /* ===== 1280x720 固定横版画布 ===== */
 /* GameCanvas组件处理缩放，不再需要移动端旋转 */
 
+/* ===== 禁止缩放 ===== */
+* {
+  touch-action: manipulation;
+  -ms-touch-action: manipulation;
+}
+
+html {
+  -ms-content-zooming: none;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+/* 禁止双击缩放 */
+body {
+  touch-action: pan-x pan-y;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* ===== 触控热区最小 48×48px ===== */
 .touch-target {
   min-width: 48px;

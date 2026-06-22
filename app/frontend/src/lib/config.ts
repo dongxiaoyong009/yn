@@ -13,10 +13,15 @@ const defaultConfig = {
 
 // Function to load runtime configuration
 export async function loadRuntimeConfig(): Promise<void> {
+  let timeout: number | undefined;
   try {
     console.log('🔧 DEBUG: Starting to load runtime config...');
     // Try to load configuration from a config endpoint
-    const response = await fetch('/api/config');
+    const controller = new AbortController();
+    timeout = window.setTimeout(() => controller.abort(), 1500);
+    const response = await fetch('/api/config', { signal: controller.signal });
+    window.clearTimeout(timeout);
+    timeout = undefined;
     if (response.ok) {
       const contentType = response.headers.get('content-type');
       // Only parse as JSON if the response is actually JSON
@@ -37,6 +42,9 @@ export async function loadRuntimeConfig(): Promise<void> {
   } catch (error) {
     console.log('Failed to load runtime config, using defaults:', error);
   } finally {
+    if (timeout !== undefined) {
+      window.clearTimeout(timeout);
+    }
     configLoading = false;
     console.log(
       '🔧 DEBUG: Config loading finished, configLoading set to false'

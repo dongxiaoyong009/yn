@@ -186,7 +186,7 @@ const RAW_LEVELS: Level[] = [
     background: '/assets/level1-bg.jpg',
     story: '进入废园，初见花香残影',
     dialogue: [
-      { speaker: '？？？', text: '推开这扇荒废已久的园门，一股淡淡的海棠花香扑面而来……' },
+      { speaker: '婴宁', text: '推开这扇荒废已久的园门，一股淡淡的海棠花香扑面而来……' },
       { speaker: '内心', text: '园中似有人居住的痕迹，可放眼望去，却无半个人影。' },
     ],
     items: [

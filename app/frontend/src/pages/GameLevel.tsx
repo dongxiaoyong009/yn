@@ -40,6 +40,8 @@ const GameLevel = () => {
   const [page, setPage] = useState(0);
   const [dialogueIndex, setDialogueIndex] = useState(0);
   const [showResult, setShowResult] = useState<'win' | 'lose' | null>(null);
+  // Keep track of last non-null result to prevent content jump during Dialog close animation
+  const lastResultRef = useRef<'win' | 'lose'>('win');
   const [showPause, setShowPause] = useState(false);
   const [showStartDialogue, setShowStartDialogue] = useState(true);
   const [showLevelIntroVideo, setShowLevelIntroVideo] = useState(false);
@@ -59,6 +61,13 @@ const GameLevel = () => {
   const autoHintTriggeredRef = useRef<boolean>(false);
   const touchStartXRef = useRef<number>(0);
   const touchEndXRef = useRef<number>(0);
+
+  // Track last non-null result for stable Dialog content during close animation
+  useEffect(() => {
+    if (showResult) {
+      lastResultRef.current = showResult;
+    }
+  }, [showResult]);
 
   // Play game BGM on mount
   useEffect(() => {
@@ -120,12 +129,18 @@ const GameLevel = () => {
     return () => clearInterval(interval);
   }, [showReviveAd]);
 
-  // Lose check
+  // Lose check - only trigger during active gameplay (not during transitions or cutscenes)
   useEffect(() => {
-    if (currentLives <= 0 && !showResult) {
+    if (
+      currentLives <= 0 &&
+      !showResult &&
+      !showStartDialogue &&
+      !showLevelIntroVideo &&
+      foundIds.length < (level?.items.length ?? 0)
+    ) {
       setShowResult('lose');
     }
-  }, [currentLives, showResult]);
+  }, [currentLives, showResult, showStartDialogue, showLevelIntroVideo, foundIds.length, level?.items.length]);
 
   // Win check
   useEffect(() => {
@@ -226,8 +241,8 @@ const GameLevel = () => {
     if (pendingNextLevelAfterVideo !== null) {
       const next = pendingNextLevelAfterVideo;
       setPendingNextLevelAfterVideo(null);
+      // Navigate to next level - GameLevelWrapper's key prop will force remount
       navigate(`/play/${next}`);
-      setTimeout(() => window.location.reload(), 100);
       return;
     }
     lastActionRef.current = Date.now();
@@ -378,12 +393,17 @@ const GameLevel = () => {
     if (next > LEVELS.length) {
       navigate('/levels');
     } else if (levelCutscene) {
-      setShowResult(null);
+      // Reset lives to prevent lose-check from firing when showResult becomes null
+      setCurrentLives((prev) => Math.max(prev, 1));
+      // Show video overlay FIRST (z-40 covers everything including dialog)
+      // then close dialog after a brief delay so there's no visible shrink
       setPendingNextLevelAfterVideo(next);
       setShowLevelIntroVideo(true);
+      // Delay closing the result dialog so the video overlay covers it first
+      setTimeout(() => setShowResult(null), 100);
     } else {
+      // Navigate to next level - GameLevelWrapper's key prop will force remount
       navigate(`/play/${next}`);
-      setTimeout(() => window.location.reload(), 100);
     }
   };
 
@@ -408,13 +428,16 @@ const GameLevel = () => {
         ref={sceneRef}
         onClick={handleSceneClick}
         className="absolute inset-0 cursor-pointer scene-hitarea"
-        style={{
-          backgroundImage: `url(${level.background})`,
-          backgroundSize: '100% 100%',
-          backgroundPosition: '0 0',
-          backgroundRepeat: 'no-repeat',
-        }}
       >
+        <img
+          key={level.background}
+          src={level.background}
+          alt=""
+          className="absolute inset-0 h-full w-full select-none object-fill"
+          draggable={false}
+          decoding="sync"
+          fetchPriority="high"
+        />
         {/* Hint highlight */}
         {hintItem &&
           level.items.find((i) => i.id === hintItem) &&
@@ -459,7 +482,7 @@ const GameLevel = () => {
               />
             ))}
 
-        {/* Found item markers */}
+        {/* Found item markers with entrance animation */}
         {level.items
           .filter((i) => foundIds.includes(i.id))
           .map((item) => (
@@ -472,6 +495,7 @@ const GameLevel = () => {
                 transform: 'translate(-50%, -50%)',
                 filter: 'drop-shadow(0 0 8px #7EC8A0)',
                 color: '#7EC8A0',
+                animation: 'foundMarkerPop 0.4s ease-out both',
               }}
             >
               ✓
@@ -682,7 +706,8 @@ const GameLevel = () => {
 
             {/* Item cards with blue divider lines between them - supports touch swipe */}
             <div
-              className="flex-1 flex items-stretch"
+              className="flex-1 flex items-stretch transition-opacity duration-200"
+              style={{ opacity: 1 }}
               onTouchStart={(e) => {
                 touchStartXRef.current = e.touches[0].clientX;
                 touchEndXRef.current = e.touches[0].clientX;
@@ -717,6 +742,7 @@ const GameLevel = () => {
                         padding: '6px 4px 6px',
                         minHeight: '85px',
                         opacity: found ? 0.6 : 1,
+                        transition: 'opacity 0.4s ease, background 0.4s ease, border-color 0.4s ease',
                       }}
                     >
                       {/* Item image, or emoji fallback */}
@@ -1114,13 +1140,13 @@ const GameLevel = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Result Dialog */}
-      <Dialog open={!!showResult} onOpenChange={() => {}}>
+      {/* Result Dialog - use lastResultRef for stable content during close animation */}
+      <Dialog open={showResult === 'win' || showResult === 'lose'} onOpenChange={() => {}}>
         <DialogContent
           style={{ background: '#FFF8F2', border: '3px solid #E8C37D', maxWidth: '500px' }}
           onPointerDownOutside={(e) => e.preventDefault()}
         >
-          {showResult === 'win' ? (
+          {(showResult === 'win' || (!showResult && lastResultRef.current === 'win')) && (
             <div className="text-center py-3">
               <div className="text-6xl mb-3">🎉</div>
               <div className="text-3xl font-bold mb-2" style={{ color: '#E8C37D' }}>
@@ -1174,7 +1200,8 @@ const GameLevel = () => {
                 )}
               </div>
             </div>
-          ) : (
+          )}
+          {(showResult === 'lose' || (!showResult && lastResultRef.current === 'lose')) && (
             <div className="text-center py-3">
               <div className="text-6xl mb-3">💔</div>
               <div className="text-3xl font-bold mb-2" style={{ color: '#E85D75' }}>
@@ -1222,7 +1249,7 @@ const GameLevel = () => {
               广告播放中
             </div>
             <div className="text-sm mb-4" style={{ color: '#8B7355' }}>
-              占位广告弹窗，后续可替换为真实广告 SDK
+              观看完成即可复活
             </div>
 
             <div
@@ -1237,10 +1264,10 @@ const GameLevel = () => {
               </div>
               <div className="text-5xl mb-3">📺</div>
               <div className="text-xl font-bold mb-2" style={{ color: '#FFF8F2' }}>
-                神秘商铺限时补给
+                乐元素游戏大卖!
               </div>
               <div className="text-sm leading-relaxed" style={{ color: '#E8D5A0' }}>
-                这里是广告占位内容。接入真实广告平台后，可在此展示激励视频或品牌推广素材。
+                乐元素游戏大卖!
               </div>
             </div>
 
@@ -1481,6 +1508,11 @@ const GameLevel = () => {
           0% { transform: scale(0); opacity: 0; }
           60% { transform: scale(1.3); opacity: 1; }
           100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes foundMarkerPop {
+          0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+          60% { transform: translate(-50%, -50%) scale(1.4); opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
       `}</style>
     </div>

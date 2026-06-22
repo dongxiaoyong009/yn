@@ -5,9 +5,27 @@ interface GameCanvasProps {
   className?: string;
 }
 
-const GAME_WIDTH = 1280;
-const GAME_HEIGHT = 720;
-const ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
+const ASPECT_RATIO = 16 / 9;
+
+/**
+ * Calculate the correct canvas size for the current viewport.
+ * Used both for initial state and on resize.
+ */
+function calculateSize() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  let w: number, h: number;
+  if (vw / vh > ASPECT_RATIO) {
+    h = vh;
+    w = vh * ASPECT_RATIO;
+  } else {
+    w = vw;
+    h = vw / ASPECT_RATIO;
+  }
+
+  return { width: Math.floor(w), height: Math.floor(h) };
+}
 
 /**
  * Fixed 16:9 landscape game canvas.
@@ -17,28 +35,14 @@ const ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
  */
 const GameCanvas = ({ children, className = '' }: GameCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
+  // Initialize with actual viewport size to prevent first-frame jitter
+  const [size, setSize] = useState(calculateSize);
 
   useEffect(() => {
     const updateSize = () => {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-
-      let w: number, h: number;
-      if (vw / vh > ASPECT_RATIO) {
-        // Viewport is wider than 16:9 → height-limited
-        h = vh;
-        w = vh * ASPECT_RATIO;
-      } else {
-        // Viewport is taller than 16:9 → width-limited
-        w = vw;
-        h = vw / ASPECT_RATIO;
-      }
-
-      setSize({ width: Math.floor(w), height: Math.floor(h) });
+      setSize(calculateSize());
     };
 
-    updateSize();
     window.addEventListener('resize', updateSize);
     return () => window.removeEventListener('resize', updateSize);
   }, []);

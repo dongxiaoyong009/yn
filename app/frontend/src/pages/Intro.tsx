@@ -2,13 +2,21 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadGameState, saveGameState } from '@/data/gameData';
 import GameCanvas from '@/components/GameCanvas';
+import { getPreloadedVideoSrc } from '@/utils/imagePreloader';
+
+const INTRO_VIDEO_SRC = '/assets/intro-animation.mp4';
 
 const Intro = () => {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoError, setVideoError] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+  const [videoStarted, setVideoStarted] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
   const [needsManualStart, setNeedsManualStart] = useState(false);
   const hasNavigated = useRef(false);
+  const videoSrc = getPreloadedVideoSrc(INTRO_VIDEO_SRC);
+  const canSkip = videoStarted;
 
   const handleFinish = useCallback(() => {
     if (hasNavigated.current) return;
@@ -19,6 +27,7 @@ const Intro = () => {
   }, [navigate]);
 
   const handleSkip = () => {
+    if (!canSkip) return;
     if (videoRef.current) {
       videoRef.current.pause();
     }
@@ -38,7 +47,7 @@ const Intro = () => {
   };
 
   const startVideoWithSound = useCallback(async () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || !videoReady) return;
     try {
       videoRef.current.muted = false;
       videoRef.current.volume = 1;
@@ -47,19 +56,41 @@ const Intro = () => {
     } catch {
       setNeedsManualStart(true);
     }
-  }, []);
+  }, [videoReady]);
 
   useEffect(() => {
-    if (videoError) return;
+    if (videoError || !videoReady) return;
     void startVideoWithSound();
-  }, [videoError, startVideoWithSound]);
+  }, [videoError, videoReady, startVideoWithSound]);
+
+  const updateBufferedProgress = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (Number.isFinite(video.duration) && video.duration > 0 && video.buffered.length > 0) {
+      const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+      setVideoProgress(Math.min(99, Math.max(0, Math.round((bufferedEnd / video.duration) * 100))));
+      return;
+    }
+
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      setVideoProgress((current) => Math.max(current, 30));
+    }
+  };
+
+  const handleVideoReady = () => {
+    setVideoReady(true);
+    setVideoProgress(100);
+  };
 
   const handleContainerClick = () => {
-    if (needsManualStart) {
+    if (needsManualStart && videoReady) {
       void startVideoWithSound();
       return;
     }
-    handleSkip();
+    if (canSkip) {
+      handleSkip();
+    }
   };
 
   return (
@@ -72,9 +103,17 @@ const Intro = () => {
       {!videoError && (
         <video
           ref={videoRef}
-          src="/assets/intro-animation.mp4"
+          src={videoSrc}
           preload="auto"
           playsInline
+          onLoadedData={handleVideoReady}
+          onCanPlay={handleVideoReady}
+          onProgress={updateBufferedProgress}
+          onPlaying={() => {
+            setVideoStarted(true);
+            setNeedsManualStart(false);
+          }}
+          onWaiting={updateBufferedProgress}
           onEnded={handleVideoEnd}
           onError={handleVideoError}
           className="absolute inset-0 w-full h-full object-cover"
@@ -93,7 +132,29 @@ const Intro = () => {
         </div>
       )}
 
-      {needsManualStart && !videoError && (
+      {!videoError && !videoReady && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black">
+          <div className="w-64">
+            <div className="mb-3 text-center text-sm tracking-wider" style={{ color: '#E8C37D' }}>
+              开场动画加载中...
+            </div>
+            <div className="h-2 overflow-hidden rounded-full" style={{ background: 'rgba(232, 195, 125, 0.25)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${Math.max(8, videoProgress)}%`,
+                  background: '#E8C37D',
+                }}
+              />
+            </div>
+            <div className="mt-2 text-center text-xs" style={{ color: 'rgba(255, 245, 235, 0.72)' }}>
+              {videoProgress}%
+            </div>
+          </div>
+        </div>
+      )}
+
+      {needsManualStart && videoReady && !videoError && !videoStarted && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/35">
           <button
             onClick={(e) => {
@@ -117,7 +178,8 @@ const Intro = () => {
       <div className="absolute top-5 right-5 z-20">
         <button
           onClick={(e) => { e.stopPropagation(); handleSkip(); }}
-          className="bg-transparent border-none cursor-pointer p-0 hover:scale-105 active:scale-95 transition-transform"
+          disabled={!canSkip}
+          className="bg-transparent border-none p-0 transition-transform disabled:opacity-0 disabled:pointer-events-none hover:scale-105 active:scale-95"
         >
           <img
             src="/assets/skip-button.png"
@@ -139,7 +201,7 @@ const Intro = () => {
           className="text-xs tracking-wider opacity-60"
           style={{ color: '#E8C37D' }}
         >
-          点击任意位置跳过
+          {canSkip ? '点击任意位置跳过' : '正在准备开场动画'}
         </span>
       </div>
     </div>

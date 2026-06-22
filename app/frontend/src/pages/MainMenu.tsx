@@ -8,6 +8,7 @@ import { loadGameState, saveGameState, resetGameState, DAILY_GIFTS } from '@/dat
 import { toast } from 'sonner';
 import GameCanvas from '@/components/GameCanvas';
 import audioManager from '@/utils/audioManager';
+import BackpackPanel from '@/components/BackpackPanel';
 
 // All 24 chapters data
 const ALL_CHAPTERS = [
@@ -299,7 +300,7 @@ const MainMenu = () => {
           className="relative transition-all hover:scale-110 active:scale-95"
         >
           <img
-            src="/assets/package-icon.png"
+            src="/assets/backpack-icon.png"
             alt="背包"
             className="object-contain drop-shadow-lg"
             style={{
@@ -307,15 +308,7 @@ const MainMenu = () => {
               filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))',
             }}
           />
-          <span
-            className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-bold pointer-events-none"
-            style={{
-              color: '#F5DBA3',
-              textShadow: '0 1px 3px rgba(0,0,0,0.8)',
-            }}
-          >
-            背包
-          </span>
+
         </button>
       </div>
 
@@ -413,28 +406,12 @@ const MainMenu = () => {
           className="p-0 border-0 overflow-hidden"
           style={{
             background: 'transparent',
-            maxWidth: '800px',
+            maxWidth: '720px',
             width: '95%',
             boxShadow: 'none',
           }}
         >
-          <div
-            className="relative w-full"
-            style={{
-              aspectRatio: '16/9',
-              backgroundImage: 'url(/assets/backpack-bg.png)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              borderRadius: '12px',
-            }}
-          >
-            {/* Close button - overlays the X on the background image */}
-            <button
-              onClick={() => setShowBackpack(false)}
-              className="absolute transition-colors z-10"
-              style={{ top: '8%', right: '12%', width: '6%', height: '10%', background: 'transparent', border: 'none' }}
-            />
-          </div>
+          <BackpackPanel state={state} onClose={() => setShowBackpack(false)} />
         </DialogContent>
       </Dialog>
 

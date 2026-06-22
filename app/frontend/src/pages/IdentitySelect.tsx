@@ -1,12 +1,18 @@
 import { useNavigate } from 'react-router-dom';
 import { loadGameState, saveGameState, Identity } from '@/data/gameData';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import GameCanvas from '@/components/GameCanvas';
+import audioManager from '@/utils/audioManager';
 
 const IdentitySelect = () => {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<Identity | null>(null);
   const [hovering, setHovering] = useState<Identity | null>(null);
+
+  // Start menu BGM when entering identity select page
+  useEffect(() => {
+    audioManager.playBgm('menu');
+  }, []);
 
   const isDaytime = useMemo(() => {
     const hour = new Date().getHours();
