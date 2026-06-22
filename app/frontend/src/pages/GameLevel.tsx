@@ -1106,7 +1106,17 @@ const GameLevel = () => {
               }}
               className="bg-transparent border-none cursor-pointer p-0 hover:scale-105 active:scale-95 transition-transform"
             >
-              <img src={assetPath('/assets/skip-button.png')} alt="跳过剧情" className="h-24 md:h-28 w-auto drop-shadow-lg" />
+              <img
+                src={assetPath('/assets/skip-button.png')}
+                alt="跳过剧情"
+                className="h-56 md:h-64 w-auto drop-shadow-lg"
+                onError={(event) => {
+                  const target = event.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.parentElement!.innerHTML =
+                    '<span style="color:#E8C37D;font-size:16px;padding:8px 16px;border:1px solid #E8C37D;border-radius:8px;">跳过 →</span>';
+                }}
+              />
             </button>
           </div>
         </div>

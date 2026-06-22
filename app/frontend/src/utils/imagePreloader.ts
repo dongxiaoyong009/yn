@@ -213,6 +213,8 @@ export async function preloadImages(
   return preloadResources(resources, onProgress, timeout);
 }
 
+export const LEVEL_SELECT_IMAGE_ASSETS: string[] = LEVELS.map((level) => level.background);
+
 // Critical image assets that must be loaded before showing the app
 export const CRITICAL_IMAGE_ASSETS: string[] = [
   assetPath('/assets/identity-select-design.png'),
@@ -227,6 +229,7 @@ export const CRITICAL_IMAGE_ASSETS: string[] = [
   ...Array.from({ length: 24 }, (_, index) =>
     assetPath(`/assets/chapter-cards/chapter-${String(index + 1).padStart(2, '0')}.png`)
   ),
+  ...LEVEL_SELECT_IMAGE_ASSETS,
 ];
 
 export const DIALOG_IMAGE_ASSETS: string[] = [
@@ -274,11 +277,6 @@ export function getAllCriticalResources(): ResourceItem[] {
 }
 
 export function getBackgroundResources(): ResourceItem[] {
-  const levelBackgroundResources = LEVELS.map((level) => ({
-    url: level.background,
-    type: 'image' as const,
-  }));
-
   const targetItemResources = LEVELS.flatMap((level) =>
     level.items
       .map((item) => item.image)
@@ -287,7 +285,6 @@ export function getBackgroundResources(): ResourceItem[] {
   );
 
   return [
-    ...levelBackgroundResources,
     ...DIALOG_IMAGE_ASSETS.map((url) => ({ url, type: 'image' as const })),
     ...targetItemResources,
     ...BACKGROUND_VIDEO_ASSETS.map((url) => ({ url, type: 'video' as const })),
